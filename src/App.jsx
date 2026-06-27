@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 const TODAY = new Date(2026, 4, 28);
 const fmtKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -134,7 +135,7 @@ function Login({onLogin}){
 }
 
 // ─── Calendar Grid ───────────────────────────
-function CalGrid({sched,reqs,uid,admin,onDay}){
+function CalGrid({shifts,assignments,reqs,uid,admin,onDay}){
   const months=[];
   for(let m=0;m<=1;m++){const b=new Date(TODAY.getFullYear(),TODAY.getMonth()+m,1);months.push({y:b.getFullYear(),m:b.getMonth()});}
   return(
@@ -160,19 +161,18 @@ function CalGrid({sched,reqs,uid,admin,onDay}){
                     <span style={{fontSize:12,color:'#C0B8B0'}}>{date.getDate()}</span>
                   </div>
                 );
-                const dd=sched[k];
                 const chips=[];
-                if(admin){
-                  const st=daySt(dd);
-                  if(st!=='full')chips.push(<Chip key="s" type="shortage" sm>Έλλειψη</Chip>);
-                }else{
-                  const inM=dd&&['kitchen','service','cashier'].some(c=>dd.morning[c]?.includes(uid));
-                  const inE=dd&&['kitchen','service','cashier'].some(c=>dd.evening[c]?.includes(uid));
-                  const hp=reqs.some(r=>r.userId===uid&&r.date===k&&r.status==='pending');
-                  if(inM)chips.push(<Chip key="m" type="morning" sm>Πρωινή</Chip>);
-                  if(inE)chips.push(<Chip key="e" type="evening" sm>Βραδινή</Chip>);
-                  if(hp)chips.push(<Chip key="r" type="request" sm>Αίτημα</Chip>);
-                }
+if(admin){
+  const st=calcDayStatus(shifts,assignments,k);
+  if(st!=='full')chips.push(<Chip key="s" type="shortage" sm>Έλλειψη</Chip>);
+}else{
+  const inM=assignments.some(a=>a.assigned_shift===`${k}_morning`&&a.assignment_holder===uid);
+  const inE=assignments.some(a=>a.assigned_shift===`${k}_evening`&&a.assignment_holder===uid);
+  const hp=reqs.some(r=>r.worker_requested===uid&&r.request_date===k&&r.status==='pending');
+  if(inM)chips.push(<Chip key="m" type="morning" sm>Πρωινή</Chip>);
+  if(inE)chips.push(<Chip key="e" type="evening" sm>Βραδινή</Chip>);
+  if(hp)chips.push(<Chip key="r" type="request" sm>Αίτημα</Chip>);
+}
                 return(
                   <div key={k} onClick={()=>onDay(k)} style={{
                     background:CARD,borderRadius:10,padding:'6px 5px',minHeight:68,display:'flex',
