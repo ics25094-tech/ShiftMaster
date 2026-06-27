@@ -114,10 +114,10 @@ function Login({onLogin}){
         <h2 style={{textAlign:'center',fontSize:18,fontWeight:600,margin:'0 0 22px',color:'#1A1614'}}>Σύνδεση</h2>
         <label style={{fontSize:13,fontWeight:500,color:'#1A1614',display:'block',marginBottom:6}}>Email</label>
         <input value={em} onChange={e=>setEm(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} placeholder="nikos@taverna.gr"
-          style={{width:'100%',border:`1.5px solid ${em?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'11px 12px',fontSize:15,background:'#FAF7F4',marginBottom:14,boxSizing:'border-box',outline:'none',fontFamily:'inherit'}}/>
+          style={{width:'100%',border:`1.5px solid ${em?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'11px 12px',fontSize:15,background:'#FAF7F4',marginBottom:14,boxSizing:'border-box',outline:'none',fontFamily:'inherit',color:'#1A1614'}}/>
         <label style={{fontSize:13,fontWeight:500,color:'#1A1614',display:'block',marginBottom:6}}>Κωδικός</label>
         <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} placeholder="••••"
-          style={{width:'100%',border:`1.5px solid ${pw?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'11px 12px',fontSize:15,background:'#FAF7F4',boxSizing:'border-box',outline:'none',fontFamily:'inherit'}}/>
+          style={{width:'100%',border:`1.5px solid ${pw?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'11px 12px',fontSize:15,background:'#FAF7F4',boxSizing:'border-box',outline:'none',fontFamily:'inherit',color:'#1A1614'}}/>
         {err&&<p style={{color:'#C4293A',fontSize:12,margin:'6px 0 0'}}>{err}</p>}
         <button onClick={go} style={{width:'100%',background:BLUE,color:'white',border:'none',borderRadius:10,padding:'13px',fontSize:15,fontWeight:600,cursor:'pointer',marginTop:16,letterSpacing:0.3}}>
           Είσοδος
