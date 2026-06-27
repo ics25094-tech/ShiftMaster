@@ -13,59 +13,10 @@ const DAYS_FULL=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη'
 const DAYS_COL=['Δε','Τρ','Τε','Πε','Πα','Σά','Κυ'];
 const MONTHS_SH=['Ιαν','Φεβ','Μαρ','Απρ','Μαΐ','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
 const fmtFull=k=>{const d=parseKey(k);return`${DAYS_FULL[d.getDay()]} ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;};
-const fmtTs=dt=>`${dt.getDate()} ${MONTHS_SH[dt.getMonth()]}, ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+const fmtTs=dt=>{const d=new Date(dt);return`${d.getDate()} ${MONTHS_SH[d.getMonth()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
 const monthStart=(y,m)=>{const d=new Date(y,m,1).getDay();return(d+6)%7;};
 
-const USERS=[
-  {id:'admin',name:'Δήμητρα',firstName:'Δήμητρα',email:'admin@taverna.gr',password:'admin123',role:'admin',initials:'Δ',position:'Διαχ/στής'},
-  {id:'nikos',name:'Νίκος Παπαδόπουλος',firstName:'Νίκος',email:'nikos@taverna.gr',password:'1234',role:'employee',position:'Αρχιμάγειρας',category:'kitchen',years:5,phone:'6912345678',initials:'ΝΠ'},
-  {id:'maria',name:'Μαρία Γεωργίου',firstName:'Μαρία',email:'maria@taverna.gr',password:'1234',role:'employee',position:'Μαγείρισσα',category:'kitchen',years:3,phone:'6972345678',initials:'ΜΓ'},
-  {id:'kostas',name:'Κώστας Αλεξίου',firstName:'Κώστας',email:'kostas@taverna.gr',password:'1234',role:'employee',position:'Μάγειρας',category:'kitchen',years:1,phone:'6987654321',initials:'ΚΑ'},
-  {id:'eleni',name:'Ελένη Δημητρίου',firstName:'Ελένη',email:'eleni@taverna.gr',password:'1234',role:'employee',position:'Σερβιτόρα',category:'service',years:4,phone:'6953214789',initials:'ΕΔ'},
-  {id:'giorgos',name:'Γιώργος Παπανικολάου',firstName:'Γιώργος',email:'giorgos@taverna.gr',password:'1234',role:'employee',position:'Σερβιτόρος',category:'service',years:2,phone:'6998112233',initials:'ΓΠ'},
-  {id:'sofia',name:'Σοφία Αντωνίου',firstName:'Σοφία',email:'sofia@taverna.gr',password:'1234',role:'employee',position:'Σερβιτόρα',category:'service',years:3,phone:'6936547890',initials:'ΣΑ'},
-  {id:'thanasis',name:'Θανάσης Κωνσταντίνου',firstName:'Θανάσης',email:'thanasis@taverna.gr',password:'1234',role:'employee',position:'Σερβιτόρος',category:'service',years:1,phone:'6945678123',initials:'ΘΚ'},
-  {id:'xristos',name:'Χρήστος Παπαγεωργίου',firstName:'Χρήστος',email:'xristos@taverna.gr',password:'1234',role:'employee',position:'Ταμίας',category:'cashier',years:4,phone:'6912349876',initials:'ΧΠ'},
-  {id:'anna',name:'Άννα Στεφανίδου',firstName:'Άννα',email:'anna@taverna.gr',password:'1234',role:'employee',position:'Ταμίας',category:'cashier',years:2,phone:'6967894561',initials:'ΑΣ'},
-];
 const REQ={kitchen:2,service:2,cashier:1};
-const getUser=id=>USERS.find(u=>u.id===id);
-
-function buildSched(){
-  const s={};
-  for(let i=0;i<30;i++){
-    const d=new Date(TODAY);d.setDate(d.getDate()+i);
-    const k=fmtKey(d),dow=d.getDay(),fri=dow===5;
-    let mK,mS,mC,eK,eS,eC;
-    if(i===0){mK=['maria','kostas'];mS=['eleni','giorgos'];mC=[];eK=['nikos'];eS=['sofia','thanasis'];eC=['xristos','anna'];}
-    else if(i===1){mK=['nikos','maria'];mS=['eleni','giorgos'];mC=[];eK=['nikos','kostas'];eS=['sofia'];eC=['xristos'];}
-    else if(i===2){mK=['maria','kostas'];mS=['giorgos','sofia'];mC=['xristos'];eK=['nikos','maria'];eS=['eleni','thanasis'];eC=['anna'];}
-    else if(i===3){mK=['kostas'];mS=['eleni','giorgos'];mC=['xristos'];eK=['maria'];eS=['sofia','thanasis'];eC=['xristos','anna'];}
-    else{
-      mK=fri?['nikos','maria','kostas']:(i%7===4?['kostas']:['maria','kostas']);
-      mS=(i%9===3)?['eleni']:['eleni','giorgos'];
-      mC=(i%11===5)?[]:['xristos'];
-      eK=['nikos',i%5===2?'maria':'kostas'];
-      eS=(i%10===3)?['sofia']:['sofia','thanasis'];
-      eC=['xristos','anna'];
-    }
-    s[k]={morning:{kitchen:mK,service:mS,cashier:mC},evening:{kitchen:eK,service:eS,cashier:eC}};
-  }
-  return s;
-}
-
-const shiftSt=sh=>{let e=false,m=false;for(const c of['kitchen','service','cashier']){const r=REQ[c],n=sh[c].length;if(n===0&&r>0)e=true;else if(n<r)m=true;}return e?'shortage':m?'marginal':'full';};
-const daySt=dd=>{if(!dd)return'full';const a=shiftSt(dd.morning),b=shiftSt(dd.evening);return(a==='shortage'||b==='shortage')?'shortage':(a==='marginal'||b==='marginal')?'marginal':'full';};
-
-let _nid=10;
-const INIT_REQ=[
-  {id:'r0',userId:'nikos',type:'dayoff',date:fmtKey(new Date(2026,4,31)),reason:'Εκδήλωση σχολής',status:'pending',createdAt:new Date(2026,4,28,7,30)},
-  {id:'r1',userId:'nikos',type:'dayoff',date:fmtKey(new Date(2026,4,31)),reason:'Προσωπικοί λόγοι',status:'rejected',createdAt:new Date(2026,4,23,0,14)},
-  {id:'r2',userId:'nikos',type:'dayoff',date:fmtKey(new Date(2026,4,30)),reason:'Οικογενειακή υποχρέωση',status:'pending',createdAt:new Date(2026,4,27,9,15)},
-  {id:'r3',userId:'nikos',type:'shift',shiftType:'morning',date:fmtKey(new Date(2026,4,27)),reason:'Διαθέσιμος/η το πρωί',status:'approved',createdAt:new Date(2026,4,25,14,30)},
-  {id:'r4',userId:'kostas',type:'dayoff',date:fmtKey(new Date(2026,4,29)),reason:'Ραντεβού στον γιατρό το πρωί',status:'pending',createdAt:new Date(2026,4,27,8,0)},
-  {id:'r5',userId:'giorgos',type:'shift',shiftType:'evening',date:fmtKey(new Date(2026,4,30)),reason:'Θέλω να καλύψω επιπλέον ώρες το Σαββατοκύριακο',status:'pending',createdAt:new Date(2026,4,27,10,0)},
-];
 
 const BG='#F2EDE8',BLUE='#5BBAD8',CARD='#FFFFFF';
 const SL={pending:'Σε αναμονή',approved:'Εγκρίθηκε',rejected:'Απορρίφθηκε',cancelled:'Ακυρώθηκε'};
@@ -100,7 +51,26 @@ function Login({onLogin}){
   const[em,setEm]=useState('');
   const[pw,setPw]=useState('');
   const[err,setErr]=useState('');
-  const go=()=>{const u=USERS.find(x=>x.email===em.trim()&&x.password===pw);u?(setErr(''),onLogin(u)):setErr('Λάθος email ή κωδικός');};
+  const[loading,setLoading]=useState(false);
+  const go=async()=>{
+    setLoading(true);setErr('');
+    const{data,error}=await supabase.auth.signInWithPassword({email:em.trim(),password:pw});
+    if(error){setErr('Λάθος email ή κωδικός');setLoading(false);return;}
+    const{data:profile}=await supabase.from('profiles').select('*').eq('profile_id',data.user.id).single();
+    if(profile){
+      let extra={};
+      if(profile.profile_type==='worker'){
+        const{data:w}=await supabase.from('worker').select('*,roles(role_title)').eq('worker_id',data.user.id).single();
+        if(w)extra={years:w.worker_experience,position:w.roles?.role_title,role_id:w.worker_role_id,
+          initials:profile.full_name.split(' ').map(n=>n[0]).join('').slice(0,2)};
+      }else{
+        extra={initials:profile.full_name[0]};
+      }
+      onLogin({id:data.user.id,email:data.user.email,name:profile.full_name,
+        firstName:profile.full_name.split(' ')[0],role:profile.profile_type==='employer'?'admin':'employee',...extra});
+    }
+    setLoading(false);
+  };
   return(
     <div style={{minHeight:'100vh',background:BG,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px 20px',fontFamily:'system-ui,sans-serif'}}>
       <div style={{width:58,height:58,borderRadius:16,background:BLUE,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:14,boxShadow:'0 4px 16px rgba(91,186,216,0.35)'}}>
@@ -120,18 +90,29 @@ function Login({onLogin}){
         <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} placeholder="••••"
           style={{width:'100%',border:`1.5px solid ${pw?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'11px 12px',fontSize:15,background:'#FAF7F4',boxSizing:'border-box',outline:'none',fontFamily:'inherit',color:'#1A1614'}}/>
         {err&&<p style={{color:'#C4293A',fontSize:12,margin:'6px 0 0'}}>{err}</p>}
-        <button onClick={go} style={{width:'100%',background:BLUE,color:'white',border:'none',borderRadius:10,padding:'13px',fontSize:15,fontWeight:600,cursor:'pointer',marginTop:16,letterSpacing:0.3}}>
-          Είσοδος
+        <button onClick={go} disabled={loading} style={{width:'100%',background:loading?'#A8CCE0':BLUE,color:'white',border:'none',borderRadius:10,padding:'13px',fontSize:15,fontWeight:600,cursor:loading?'not-allowed':'pointer',marginTop:16,letterSpacing:0.3}}>
+          {loading?'Σύνδεση...':'Είσοδος'}
         </button>
-        <div style={{marginTop:16,padding:'12px',background:'#F8F4F0',borderRadius:10,fontSize:12,color:'#5A5650'}}>
-          <p style={{fontWeight:600,margin:'0 0 5px',color:'#1A1614'}}>Demo λογαριασμοί</p>
-          <p style={{margin:'0 0 3px'}}>Διαχ/στής: <b>admin@taverna.gr</b> / <b>admin123</b></p>
-          <p style={{margin:'0 0 3px'}}>Υπάλληλος: <b>nikos@taverna.gr</b> / <b>1234</b></p>
-          <p style={{margin:0,color:'#8A8480',fontSize:11}}>Άλλοι: maria, kostas, eleni, giorgos, sofia, thanasis, xristos, anna @taverna.gr (κωδ: 1234)</p>
-        </div>
       </div>
     </div>
   );
+}
+
+// ─── Q6: Υπολογισμός κατάστασης ημέρας ─────
+function calcDayStatus(shifts,assignments,date){
+  const dayShifts=shifts.filter(s=>s.shift_day===date);
+  let hasShortage=false,hasMarginal=false;
+  for(const shift of dayShifts){
+    for(const req of(shift.shift_requirements||[])){
+      const assigned=assignments.filter(a=>
+        a.assigned_shift===shift.shift_id&&
+        a.worker?.worker_role_id===req.required_role
+      ).length;
+      if(assigned===0&&req.workers_needed>0)hasShortage=true;
+      else if(assigned<req.workers_needed)hasMarginal=true;
+    }
+  }
+  return hasShortage?'shortage':hasMarginal?'marginal':'full';
 }
 
 // ─── Calendar Grid ───────────────────────────
@@ -162,17 +143,17 @@ function CalGrid({shifts,assignments,reqs,uid,admin,onDay}){
                   </div>
                 );
                 const chips=[];
-if(admin){
-  const st=calcDayStatus(shifts,assignments,k);
-  if(st!=='full')chips.push(<Chip key="s" type="shortage" sm>Έλλειψη</Chip>);
-}else{
-  const inM=assignments.some(a=>a.assigned_shift===`${k}_morning`&&a.assignment_holder===uid);
-  const inE=assignments.some(a=>a.assigned_shift===`${k}_evening`&&a.assignment_holder===uid);
-  const hp=reqs.some(r=>r.worker_requested===uid&&r.request_date===k&&r.status==='pending');
-  if(inM)chips.push(<Chip key="m" type="morning" sm>Πρωινή</Chip>);
-  if(inE)chips.push(<Chip key="e" type="evening" sm>Βραδινή</Chip>);
-  if(hp)chips.push(<Chip key="r" type="request" sm>Αίτημα</Chip>);
-}
+                if(admin){
+                  const st=calcDayStatus(shifts,assignments,k);
+                  if(st!=='full')chips.push(<Chip key="s" type="shortage" sm>Έλλειψη</Chip>);
+                }else{
+                  const inM=assignments.some(a=>a.assigned_shift===`${k}_morning`&&a.assignment_holder===uid);
+                  const inE=assignments.some(a=>a.assigned_shift===`${k}_evening`&&a.assignment_holder===uid);
+                  const hp=reqs.some(r=>r.worker_requested===uid&&r.request_date===k&&r.status==='pending');
+                  if(inM)chips.push(<Chip key="m" type="morning" sm>Πρωινή</Chip>);
+                  if(inE)chips.push(<Chip key="e" type="evening" sm>Βραδινή</Chip>);
+                  if(hp)chips.push(<Chip key="r" type="request" sm>Αίτημα</Chip>);
+                }
                 return(
                   <div key={k} onClick={()=>onDay(k)} style={{
                     background:CARD,borderRadius:10,padding:'6px 5px',minHeight:68,display:'flex',
@@ -193,16 +174,30 @@ if(admin){
 }
 
 // ─── Employee Day Detail ─────────────────────
-function EmpDay({dk,sched,reqs,uid,onBack,onReq}){
+function EmpDay({dk,shifts,assignments,reqs,uid,onBack,onReq}){
   const[modal,setModal]=useState(null);
   const[reason,setReason]=useState('');
-  const dd=sched[dk];
-  const inM=dd&&['kitchen','service','cashier'].some(c=>dd.morning[c]?.includes(uid));
-  const inE=dd&&['kitchen','service','cashier'].some(c=>dd.evening[c]?.includes(uid));
-  const submit=()=>{
+  const inM=assignments.some(a=>a.assigned_shift===`${dk}_morning`&&a.assignment_holder===uid);
+  const inE=assignments.some(a=>a.assigned_shift===`${dk}_evening`&&a.assignment_holder===uid);
+  const submit=async()=>{
     if(modal==='dayoff'&&!reason.trim())return;
-    onReq({id:`r${_nid++}`,userId:uid,type:modal==='dayoff'?'dayoff':'shift',
-      shiftType:modal==='dayoff'?null:modal,date:dk,reason:reason.trim(),status:'pending',createdAt:new Date()});
+    const req_id=`r_${Date.now()}`;
+    const{error}=await supabase.from('requests').insert({
+      request_id:req_id,worker_requested:uid,
+      request_type:modal==='dayoff'?'day_off':'shift_preference',
+      status:'pending',request_date:dk
+    });
+    if(!error){
+      if(modal==='dayoff'){
+        await supabase.from('day_off_requests').insert({day_off_request_id:req_id,reason:reason.trim()});
+      }else{
+        await supabase.from('shift_preference_requests').insert({shift_preference_request_id:req_id,preferred_shift:modal,reason:reason.trim()});
+      }
+      onReq({request_id:req_id,worker_requested:uid,request_type:modal==='dayoff'?'day_off':'shift_preference',
+        status:'pending',request_date:dk,created_at:new Date().toISOString(),
+        day_off_requests:modal==='dayoff'?{reason:reason.trim()}:null,
+        shift_preference_requests:modal!=='dayoff'?{preferred_shift:modal,reason:reason.trim()}:null});
+    }
     setModal(null);setReason('');
   };
   return(
@@ -242,7 +237,7 @@ function EmpDay({dk,sched,reqs,uid,onBack,onReq}){
               {modal==='dayoff'&&<span style={{color:'#E24B4A'}}> *</span>}
             </label>
             <textarea value={reason} onChange={e=>setReason(e.target.value.slice(0,300))} placeholder={modal==='dayoff'?'Γράψε γιατί ζητάς το ρεπό...':'Γράψε κάτι αν θέλεις'}
-              style={{width:'100%',border:`2px solid ${reason?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'10px 12px',fontSize:14,resize:'none',height:96,boxSizing:'border-box',outline:'none',fontFamily:'inherit',background:'#FAF7F4'}}/>
+              style={{width:'100%',border:`2px solid ${reason?BLUE:'#E0DAD4'}`,borderRadius:10,padding:'10px 12px',fontSize:14,resize:'none',height:96,boxSizing:'border-box',outline:'none',fontFamily:'inherit',background:'#FAF7F4',color:'#1A1614'}}/>
             <p style={{textAlign:'right',fontSize:11,color:'#9A9590',margin:'2px 0 0'}}>{reason.length}/300</p>
             <div style={{display:'flex',gap:10,marginTop:16}}>
               <button onClick={()=>{setModal(null);setReason('');}} style={{flex:1,border:'1px solid #E0DAD4',background:'none',borderRadius:10,padding:'12px',cursor:'pointer',fontSize:14,color:'#5A5650'}}>Άκυρο</button>
@@ -262,8 +257,8 @@ function EmpDay({dk,sched,reqs,uid,onBack,onReq}){
 function EmpReqs({reqs,uid,onCancel}){
   const[sf,setSf]=useState('all');
   const[tf,setTf]=useState('all');
-  const mine=reqs.filter(r=>r.userId===uid);
-  const flt=mine.filter(r=>(sf==='all'||r.status===sf)&&(tf==='all'||r.type===tf));
+  const mine=reqs.filter(r=>r.worker_requested===uid);
+  const flt=mine.filter(r=>(sf==='all'||r.status===sf)&&(tf==='all'||r.request_type===tf));
   const FilterBtn=({val,cur,set,lbl})=>(
     <button onClick={()=>set(val)} style={{border:'none',borderRadius:20,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:500,
       background:cur===val?BLUE:CARD,color:cur===val?'white':'#5A5650',boxShadow:cur!==val?'0 0 0 1px #E0DAD4':'none'}}>{lbl}</button>
@@ -280,31 +275,31 @@ function EmpReqs({reqs,uid,onCancel}){
       </div>
       <p style={{fontSize:10,fontWeight:700,color:'#9A9590',letterSpacing:1.2,margin:'0 0 7px'}}>ΤΥΠΟΣ</p>
       <div style={{display:'flex',gap:6,marginBottom:18}}>
-        {[['all','Όλα'],['dayoff','Ρεπό']].map(([v,l])=>(
+        {[['all','Όλα'],['day_off','Ρεπό']].map(([v,l])=>(
           <FilterBtn key={v} val={v} cur={tf} set={setTf} lbl={l}/>
         ))}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {flt.length===0&&<p style={{color:'#9A9590',textAlign:'center',marginTop:32,fontSize:14}}>Δεν υπάρχουν αιτήματα</p>}
         {flt.map(r=>(
-          <div key={r.id} style={{background:CARD,borderRadius:14,padding:'16px',border:'1px solid #EDE8E2'}}>
+          <div key={r.request_id} style={{background:CARD,borderRadius:14,padding:'16px',border:'1px solid #EDE8E2'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
               <div>
-                <p style={{margin:'0 0 2px',fontWeight:600,color:'#1A1614'}}>{r.type==='dayoff'?'Ρεπό':`Αίτημα ${r.shiftType==='morning'?'Πρωινής':'Βραδινής'}`}</p>
-                <p style={{margin:0,color:'#7A7570',fontSize:13}}>{fmtFull(r.date)}{r.type==='dayoff'?' · Όλη τη μέρα':r.shiftType?` · ${r.shiftType==='morning'?'Πρωινή':'Βραδινή'}`:''}</p>
+                <p style={{margin:'0 0 2px',fontWeight:600,color:'#1A1614'}}>{r.request_type==='day_off'?'Ρεπό':`Αίτημα ${r.shift_preference_requests?.preferred_shift==='morning'?'Πρωινής':'Βραδινής'}`}</p>
+                <p style={{margin:0,color:'#7A7570',fontSize:13}}>{fmtFull(r.request_date)}{r.request_type==='day_off'?' · Όλη τη μέρα':''}</p>
               </div>
               <SBadge type={r.status}>{SL[r.status]}</SBadge>
             </div>
-            {r.reason&&(
+            {r.day_off_requests?.reason&&(
               <div style={{background:'#F8F4F0',borderRadius:8,padding:'10px 12px',marginBottom:8}}>
                 <p style={{margin:'0 0 2px',fontSize:12,color:'#9A9590'}}>Αιτιολογία</p>
-                <p style={{margin:0,fontSize:13,color:'#1A1614'}}>{r.reason}</p>
+                <p style={{margin:0,fontSize:13,color:'#1A1614'}}>{r.day_off_requests.reason}</p>
               </div>
             )}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <p style={{margin:0,fontSize:12,color:'#9A9590'}}>{fmtTs(r.createdAt)}</p>
+              <p style={{margin:0,fontSize:12,color:'#9A9590'}}>{fmtTs(r.created_at)}</p>
               {r.status==='pending'&&(
-                <button onClick={()=>onCancel(r.id)} style={{border:'1px solid #FFCDD5',background:'none',color:'#A01828',borderRadius:8,padding:'5px 10px',cursor:'pointer',fontSize:12,fontWeight:500}}>× Ακύρωση αιτήματος</button>
+                <button onClick={()=>onCancel(r.request_id)} style={{border:'1px solid #FFCDD5',background:'none',color:'#A01828',borderRadius:8,padding:'5px 10px',cursor:'pointer',fontSize:12,fontWeight:500}}>× Ακύρωση αιτήματος</button>
               )}
             </div>
           </div>
@@ -324,7 +319,7 @@ function EmpProfile({user,onLogout}){
           <Av initials={user.initials} size={50}/>
           <div><p style={{margin:'0 0 3px',fontWeight:700,fontSize:17,color:'#1A1614'}}>{user.name}</p><p style={{margin:0,color:'#7A7570',fontSize:14}}>{user.position}</p></div>
         </div>
-        {[['Όνομα',user.name],['Πόστο',user.position],['Χρόνια υπηρεσίας',`${user.years} χρόν${user.years===1?'ος':'ια'}`],['Τηλέφωνο',user.phone],['Email',user.email]].map(([l,v])=>(
+        {[['Όνομα',user.name],['Πόστο',user.position],['Χρόνια υπηρεσίας',`${user.years} χρόν${user.years===1?'ος':'ια'}`],['Email',user.email]].map(([l,v])=>(
           <div key={l} style={{marginBottom:14}}>
             <p style={{margin:'0 0 2px',fontSize:12,color:BLUE,fontWeight:500}}>{l}</p>
             <p style={{margin:0,fontSize:15,fontWeight:600,color:'#1A1614'}}>{v}</p>
@@ -339,31 +334,60 @@ function EmpProfile({user,onLogout}){
 }
 
 // ─── Admin Day Detail ────────────────────────
-function AdminDay({dk,sched,setSched,onBack}){
+function AdminDay({dk,shifts,assignments,setAssignments,workers,onBack}){
   const[adding,setAdding]=useState(null);
-  const emptyDay={morning:{kitchen:[],service:[],cashier:[]},evening:{kitchen:[],service:[],cashier:[]}};
-  const dd=sched[dk]||emptyDay;
-  const removeEmp=(st,cat,uid)=>setSched(p=>{
-    const n=JSON.parse(JSON.stringify(p[dk]||emptyDay));
-    n[st][cat]=n[st][cat].filter(id=>id!==uid);
-    return{...p,[dk]:n};
-  });
-  const addEmp=(st,uid)=>{
-    const u=getUser(uid);if(!u)return;
-    setSched(p=>{
-      const n=JSON.parse(JSON.stringify(p[dk]||emptyDay));
-      if(!n[st][u.category].includes(uid))n[st][u.category].push(uid);
-      return{...p,[dk]:n};
+  const dayShifts=shifts.filter(s=>s.shift_day===dk);
+
+  const removeEmp=async(assignmentId)=>{
+    await supabase.from('shift_assignments').delete().eq('assignment_id',assignmentId);
+    setAssignments(p=>p.filter(a=>a.assignment_id!==assignmentId));
+  };
+
+  const addEmp=async(shiftId,workerId)=>{
+    const assignmentId=`as_${dk.replace(/-/g,'')}_${workerId.slice(-4)}`;
+    const{error}=await supabase.from('shift_assignments').insert({
+      assignment_id:assignmentId,assignment_holder:workerId,assigned_shift:shiftId
     });
+    if(!error){
+      const w=workers.find(x=>x.worker_id===workerId);
+      setAssignments(p=>[...p,{assignment_id:assignmentId,assignment_holder:workerId,assigned_shift:shiftId,worker:w}]);
+    }
     setAdding(null);
   };
-  const renderShift=(st)=>{
-    const sh=dd[st],status=shiftSt(sh),lbl=st==='morning'?'Πρωινή':'Βραδινή',hrs=st==='morning'?'10:00–18:00':'18:00–02:00';
-    const allIn=[...sh.kitchen,...sh.service,...sh.cashier];
-    const otherSt=st==='morning'?'evening':'morning';
-    const otherIn=dd[otherSt]?[...dd[otherSt].kitchen,...dd[otherSt].service,...dd[otherSt].cashier]:[];
-    const avail=USERS.filter(u=>u.role==='employee'&&!allIn.includes(u.id));
-    const isA=adding===st;
+
+  const renderShift=(shiftType)=>{
+    const shift=dayShifts.find(s=>s.shift_title===shiftType);
+    if(!shift)return null;
+    const shiftAssignments=assignments.filter(a=>a.assigned_shift===shift.shift_id);
+    const allInIds=shiftAssignments.map(a=>a.assignment_holder);
+    const otherType=shiftType==='morning'?'evening':'morning';
+    const otherShift=dayShifts.find(s=>s.shift_title===otherType);
+    const otherInIds=otherShift?assignments.filter(a=>a.assigned_shift===otherShift.shift_id).map(a=>a.assignment_holder):[];
+    const avail=workers.filter(w=>!allInIds.includes(w.worker_id));
+    const lbl=shiftType==='morning'?'Πρωινή':'Βραδινή';
+    const hrs=shiftType==='morning'?'10:00–18:00':'18:00–02:00';
+    const reqs=shift.shift_requirements||[];
+    const isA=adding===shiftType;
+
+    const getRoleStatus=(roleId)=>{
+      const req=reqs.find(r=>r.required_role===roleId);
+      if(!req)return{cur:0,needed:0};
+      const cur=shiftAssignments.filter(a=>a.worker?.worker_role_id===roleId).length;
+      return{cur,needed:req.workers_needed};
+    };
+
+    const overallStatus=()=>{
+      let shortage=false,marginal=false;
+      for(const req of reqs){
+        const{cur,needed}=getRoleStatus(req.required_role);
+        if(cur===0&&needed>0)shortage=true;
+        else if(cur<needed)marginal=true;
+      }
+      return shortage?'shortage':marginal?'marginal':'full';
+    };
+
+    const status=overallStatus();
+
     return(
       <div style={{background:CARD,borderRadius:14,padding:'16px',border:'1px solid #EDE8E2',marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:6}}>
@@ -372,35 +396,32 @@ function AdminDay({dk,sched,setSched,onBack}){
           {status==='marginal'&&<SBadge type="pending">Οριακή κάλυψη</SBadge>}
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:14}}>
-          {[['kitchen','ΚΟΥΖΙΝΑ'],['service','ΣΕΡΒΙΤΟΡΟΙ'],['cashier','ΤΑΜΕΙΟ']].map(([c,l])=>{
-            const cur=sh[c].length,req=REQ[c],short=cur<req;
+          {reqs.map(req=>{
+            const{cur,needed}=getRoleStatus(req.required_role);
+            const short=cur<needed;
             return(
-              <div key={c} style={{background:short?'#FFF5F5':'#F8F4F0',borderRadius:8,padding:'8px',textAlign:'center',border:`1px solid ${short?'#FFCDD5':'#EDE8E2'}`}}>
-                <p style={{margin:'0 0 2px',fontSize:9,color:'#9A9590',fontWeight:700,letterSpacing:0.8}}>{l}</p>
-                <p style={{margin:0,fontSize:17,fontWeight:700,color:short?'#A01828':'#1A1614'}}>{cur}/{req}</p>
+              <div key={req.required_role} style={{background:short?'#FFF5F5':'#F8F4F0',borderRadius:8,padding:'8px',textAlign:'center',border:`1px solid ${short?'#FFCDD5':'#EDE8E2'}`}}>
+                <p style={{margin:'0 0 2px',fontSize:9,color:'#9A9590',fontWeight:700,letterSpacing:0.8}}>{req.required_role.toUpperCase()}</p>
+                <p style={{margin:0,fontSize:17,fontWeight:700,color:short?'#A01828':'#1A1614'}}>{cur}/{needed}</p>
               </div>
             );
           })}
         </div>
-        {[['kitchen','ΚΟΥΖΙΝΑ'],['service','ΣΕΡΒΙΣ'],['cashier','ΤΑΜΕΙΟ']].map(([c,l])=>{
-          if(!sh[c].length)return null;
+        {shiftAssignments.map(a=>{
+          const w=a.worker;if(!w)return null;
+          const initials=(w.profiles?.full_name||'').split(' ').map(n=>n[0]).join('').slice(0,2);
           return(
-            <div key={c} style={{marginBottom:10}}>
-              <p style={{fontSize:9,color:'#9A9590',fontWeight:700,letterSpacing:1.2,margin:'0 0 5px'}}>{l}</p>
-              {sh[c].map(uid=>{
-                const u=getUser(uid);if(!u)return null;
-                return(
-                  <div key={uid} style={{display:'flex',alignItems:'center',gap:10,background:'#F8F4F0',borderRadius:10,padding:'10px 12px',marginBottom:5}}>
-                    <Av initials={u.initials} size={32}/>
-                    <div style={{flex:1}}><p style={{margin:'0 0 1px',fontWeight:500,fontSize:14,color:'#1A1614'}}>{u.name}</p><p style={{margin:0,fontSize:12,color:'#7A7570'}}>{u.position}</p></div>
-                    <button onClick={()=>removeEmp(st,c,uid)} style={{border:'none',background:'none',cursor:'pointer',color:'#9A9590',fontSize:20,padding:'0 4px',lineHeight:1}}>×</button>
-                  </div>
-                );
-              })}
+            <div key={a.assignment_id} style={{display:'flex',alignItems:'center',gap:10,background:'#F8F4F0',borderRadius:10,padding:'10px 12px',marginBottom:5}}>
+              <Av initials={initials} size={32}/>
+              <div style={{flex:1}}>
+                <p style={{margin:'0 0 1px',fontWeight:500,fontSize:14,color:'#1A1614'}}>{w.profiles?.full_name}</p>
+                <p style={{margin:0,fontSize:12,color:'#7A7570'}}>{w.roles?.role_title}</p>
+              </div>
+              <button onClick={()=>removeEmp(a.assignment_id)} style={{border:'none',background:'none',cursor:'pointer',color:'#9A9590',fontSize:20,padding:'0 4px',lineHeight:1}}>×</button>
             </div>
           );
         })}
-        <button onClick={()=>setAdding(isA?null:st)} style={{width:'100%',background:BLUE,color:'white',border:'none',borderRadius:10,padding:'12px',cursor:'pointer',fontSize:14,fontWeight:600,marginTop:4}}>
+        <button onClick={()=>setAdding(isA?null:shiftType)} style={{width:'100%',background:BLUE,color:'white',border:'none',borderRadius:10,padding:'12px',cursor:'pointer',fontSize:14,fontWeight:600,marginTop:4}}>
           + Προσθήκη εργαζομένου
         </button>
         {isA&&(
@@ -409,15 +430,16 @@ function AdminDay({dk,sched,setSched,onBack}){
               ?<p style={{textAlign:'center',color:'#9A9590',padding:'14px',margin:0,fontSize:13}}>Δεν υπάρχουν διαθέσιμοι</p>
               :<>
                 <p style={{fontSize:12,color:'#7A7570',margin:'10px 12px 4px',fontWeight:500}}>Διαθέσιμοι εργαζόμενοι</p>
-                {avail.map((u,i)=>{
-                  const inOther=otherIn.includes(u.id);
+                {avail.map(w=>{
+                  const inOther=otherInIds.includes(w.worker_id);
+                  const initials=(w.profiles?.full_name||'').split(' ').map(n=>n[0]).join('').slice(0,2);
                   return(
-                    <button key={u.id} onClick={()=>addEmp(st,u.id)}
+                    <button key={w.worker_id} onClick={()=>addEmp(shift.shift_id,w.worker_id)}
                       style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 12px',border:'none',background:'none',cursor:'pointer',textAlign:'left',borderTop:'1px solid #F0EBE5'}}>
-                      <Av initials={u.initials} size={32}/>
+                      <Av initials={initials} size={32}/>
                       <div>
-                        <p style={{margin:'0 0 1px',fontWeight:500,fontSize:14,color:'#1A1614'}}>{u.name}</p>
-                        <p style={{margin:0,fontSize:12,color:inOther?'#BC5210':'#7A7570'}}>{u.position}{inOther?' · ήδη σε άλλη βάρδια':''}</p>
+                        <p style={{margin:'0 0 1px',fontWeight:500,fontSize:14,color:'#1A1614'}}>{w.profiles?.full_name}</p>
+                        <p style={{margin:0,fontSize:12,color:inOther?'#BC5210':'#7A7570'}}>{w.roles?.role_title}{inOther?' · ήδη σε άλλη βάρδια':''}</p>
                       </div>
                     </button>
                   );
@@ -429,6 +451,7 @@ function AdminDay({dk,sched,setSched,onBack}){
       </div>
     );
   };
+
   return(
     <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,sans-serif',padding:'16px 16px 100px'}}>
       <BackBtn onClick={onBack}/>
@@ -441,26 +464,38 @@ function AdminDay({dk,sched,setSched,onBack}){
 }
 
 // ─── Admin Requests ──────────────────────────
-function AdminReqs({reqs,setReqs,sched}){
+function AdminReqs({reqs,setReqs,shifts,assignments}){
   const[f,setF]=useState('pending');
   const flt=reqs.filter(r=>f==='all'||r.status===f);
-  const upd=(id,st)=>setReqs(p=>p.map(r=>r.id===id?{...r,status:st}:r));
+
+  const upd=async(id,st)=>{
+    await supabase.from('requests').update({status:st}).eq('request_id',id);
+    setReqs(p=>p.map(r=>r.request_id===id?{...r,status:st}:r));
+  };
+
   const impact=r=>{
-    if(r.type!=='dayoff')return null;
-    const dd=sched[r.date];if(!dd)return null;
-    const u=getUser(r.userId);if(!u?.category)return null;
+    if(r.request_type!=='day_off')return null;
+    const workerAssignments=assignments.filter(a=>a.assignment_holder===r.worker_requested);
     const res=[];
-    for(const st of['morning','evening']){
-      const sh=dd[st];
-      if(sh[u.category]?.includes(r.userId)){
-        const nw=sh[u.category].length-1,req=REQ[u.category],lbl=st==='morning'?'Πρωινή':'Βραδινή';
-        if(nw===0&&req>0)res.push({lbl,st:'shortage'});
-        else if(nw<req)res.push({lbl,st:'marginal'});
-        else res.push({lbl,st:'full'});
+    for(const wa of workerAssignments){
+      const shift=shifts.find(s=>s.shift_id===wa.assigned_shift&&s.shift_day===r.request_date);
+      if(!shift)continue;
+      const shiftReqs=shift.shift_requirements||[];
+      const w=wa.worker;
+      if(!w)continue;
+      for(const req of shiftReqs){
+        if(req.required_role===w.worker_role_id){
+          const cur=assignments.filter(a=>a.assigned_shift===shift.shift_id&&a.worker?.worker_role_id===req.required_role).length;
+          const nw=cur-1;
+          const lbl=shift.shift_title==='morning'?'Πρωινή':'Βραδινή';
+          if(nw===0&&req.workers_needed>0)res.push({lbl,st:'shortage'});
+          else if(nw<req.workers_needed)res.push({lbl,st:'marginal'});
+        }
       }
     }
     return res.length?res:null;
   };
+
   return(
     <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,sans-serif',padding:'16px 16px 100px'}}>
       <h2 style={{fontSize:18,fontWeight:700,margin:'0 0 2px',color:'#1A1614'}}>Αιτήματα</h2>
@@ -474,21 +509,26 @@ function AdminReqs({reqs,setReqs,sched}){
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {flt.length===0&&<p style={{color:'#9A9590',textAlign:'center',marginTop:32,fontSize:14}}>Δεν υπάρχουν αιτήματα</p>}
         {flt.map(r=>{
-          const u=getUser(r.userId);if(!u)return null;
+          const worker=r.worker;
+          if(!worker)return null;
+          const initials=(worker.profiles?.full_name||'').split(' ').map(n=>n[0]).join('').slice(0,2);
           const imp=impact(r);
           return(
-            <div key={r.id} style={{background:CARD,borderRadius:14,padding:'16px',border:'1px solid #EDE8E2'}}>
+            <div key={r.request_id} style={{background:CARD,borderRadius:14,padding:'16px',border:'1px solid #EDE8E2'}}>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                <Av initials={u.initials} size={38}/>
-                <div style={{flex:1}}><p style={{margin:'0 0 1px',fontWeight:600,color:'#1A1614'}}>{u.name}</p><p style={{margin:0,color:'#7A7570',fontSize:12}}>{u.position}</p></div>
+                <Av initials={initials} size={38}/>
+                <div style={{flex:1}}>
+                  <p style={{margin:'0 0 1px',fontWeight:600,color:'#1A1614'}}>{worker.profiles?.full_name}</p>
+                  <p style={{margin:0,color:'#7A7570',fontSize:12}}>{worker.roles?.role_title}</p>
+                </div>
                 <SBadge type={r.status}>{SL[r.status]}</SBadge>
               </div>
-              <p style={{margin:'0 0 2px',fontWeight:600,color:'#1A1614'}}>{r.type==='dayoff'?'Ρεπό':`Αίτημα ${r.shiftType==='morning'?'Πρωινής':'Βραδινής'}`}</p>
-              <p style={{margin:'0 0 10px',color:'#7A7570',fontSize:13}}>{fmtFull(r.date)}</p>
-              {r.reason&&(
+              <p style={{margin:'0 0 2px',fontWeight:600,color:'#1A1614'}}>{r.request_type==='day_off'?'Ρεπό':`Αίτημα ${r.shift_preference_requests?.preferred_shift==='morning'?'Πρωινής':'Βραδινής'}`}</p>
+              <p style={{margin:'0 0 10px',color:'#7A7570',fontSize:13}}>{fmtFull(r.request_date)}</p>
+              {r.day_off_requests?.reason&&(
                 <div style={{background:'#F8F4F0',borderRadius:8,padding:'10px 12px',marginBottom:10}}>
                   <p style={{margin:'0 0 2px',fontSize:12,color:'#9A9590'}}>Αιτιολογία</p>
-                  <p style={{margin:0,fontSize:13,color:'#1A1614'}}>{r.reason}</p>
+                  <p style={{margin:0,fontSize:13,color:'#1A1614'}}>{r.day_off_requests.reason}</p>
                 </div>
               )}
               {imp&&(
@@ -497,8 +537,8 @@ function AdminReqs({reqs,setReqs,sched}){
                   {imp.map(({lbl,st})=>(
                     <p key={lbl} style={{margin:'0 0 2px',fontSize:13}}>
                       <span style={{color:'#5A5650'}}>{lbl} → </span>
-                      <span style={{color:st==='shortage'?'#A01828':st==='marginal'?'#9A6E0E':'#1A6B3C',fontWeight:500}}>
-                        {st==='shortage'?'Έλλειψη προσωπικού':st==='marginal'?'Οριακή κάλυψη':'Πλήρης κάλυψη'}
+                      <span style={{color:st==='shortage'?'#A01828':'#9A6E0E',fontWeight:500}}>
+                        {st==='shortage'?'Έλλειψη προσωπικού':'Οριακή κάλυψη'}
                       </span>
                     </p>
                   ))}
@@ -506,8 +546,8 @@ function AdminReqs({reqs,setReqs,sched}){
               )}
               {r.status==='pending'&&(
                 <div style={{display:'flex',gap:8}}>
-                  <button onClick={()=>upd(r.id,'approved')} style={{flex:1,background:'#E8F7EF',color:'#1A6B3C',border:'1px solid #B3E6C8',borderRadius:10,padding:'11px',cursor:'pointer',fontSize:14,fontWeight:600}}>✓ Έγκριση</button>
-                  <button onClick={()=>upd(r.id,'rejected')} style={{flex:1,background:'none',color:'#A01828',border:'1px solid #FFCDD5',borderRadius:10,padding:'11px',cursor:'pointer',fontSize:14,fontWeight:600}}>✕ Απόρριψη</button>
+                  <button onClick={()=>upd(r.request_id,'approved')} style={{flex:1,background:'#E8F7EF',color:'#1A6B3C',border:'1px solid #B3E6C8',borderRadius:10,padding:'11px',cursor:'pointer',fontSize:14,fontWeight:600}}>✓ Έγκριση</button>
+                  <button onClick={()=>upd(r.request_id,'rejected')} style={{flex:1,background:'none',color:'#A01828',border:'1px solid #FFCDD5',borderRadius:10,padding:'11px',cursor:'pointer',fontSize:14,fontWeight:600}}>✕ Απόρριψη</button>
                 </div>
               )}
             </div>
@@ -519,41 +559,46 @@ function AdminReqs({reqs,setReqs,sched}){
 }
 
 // ─── Admin Staff ─────────────────────────────
-function AdminStaff({onLogout}){
+function AdminStaff({workers,onLogout}){
   const[sel,setSel]=useState(null);
-  const emps=USERS.filter(u=>u.role==='employee');
-  if(sel){const u=sel;return(
-    <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,sans-serif',padding:'16px 16px 100px'}}>
-      <BackBtn onClick={()=>setSel(null)}/>
-      <div style={{background:CARD,borderRadius:14,padding:'20px 16px',border:'1px solid #EDE8E2'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16,paddingBottom:16,borderBottom:'1px solid #EDE8E2'}}>
-          <Av initials={u.initials} size={50}/>
-          <div><p style={{margin:'0 0 3px',fontWeight:700,fontSize:17,color:'#1A1614'}}>{u.name}</p><p style={{margin:0,color:'#7A7570',fontSize:14}}>{u.position}</p></div>
-        </div>
-        {[['Όνομα',u.name],['Πόστο',u.position],['Χρόνια υπηρεσίας',`${u.years} χρόν${u.years===1?'ος':'ια'}`],['Τηλέφωνο',u.phone],['Email',u.email]].map(([l,v])=>(
-          <div key={l} style={{marginBottom:14}}>
-            <p style={{margin:'0 0 2px',fontSize:12,color:BLUE,fontWeight:500}}>{l}</p>
-            <p style={{margin:0,fontSize:15,fontWeight:600,color:'#1A1614'}}>{v}</p>
+  if(sel){const w=sel;
+    const initials=(w.profiles?.full_name||'').split(' ').map(n=>n[0]).join('').slice(0,2);
+    return(
+      <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,sans-serif',padding:'16px 16px 100px'}}>
+        <BackBtn onClick={()=>setSel(null)}/>
+        <div style={{background:CARD,borderRadius:14,padding:'20px 16px',border:'1px solid #EDE8E2'}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16,paddingBottom:16,borderBottom:'1px solid #EDE8E2'}}>
+            <Av initials={initials} size={50}/>
+            <div><p style={{margin:'0 0 3px',fontWeight:700,fontSize:17,color:'#1A1614'}}>{w.profiles?.full_name}</p><p style={{margin:0,color:'#7A7570',fontSize:14}}>{w.roles?.role_title}</p></div>
           </div>
-        ))}
+          {[['Όνομα',w.profiles?.full_name],['Πόστο',w.roles?.role_title],['Χρόνια υπηρεσίας',`${w.worker_experience} χρόν${w.worker_experience===1?'ος':'ια'}`],['Τηλέφωνο',w.phone||'—']].map(([l,v])=>(
+            <div key={l} style={{marginBottom:14}}>
+              <p style={{margin:'0 0 2px',fontSize:12,color:BLUE,fontWeight:500}}>{l}</p>
+              <p style={{margin:0,fontSize:15,fontWeight:600,color:'#1A1614'}}>{v}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );}
+    );
+  }
   return(
     <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,sans-serif',padding:'16px 16px 100px'}}>
       <h2 style={{fontSize:18,fontWeight:700,margin:'0 0 2px',color:'#1A1614'}}>Προσωπικό</h2>
-      <p style={{color:'#7A7570',fontSize:13,margin:'0 0 16px'}}>{emps.length} άτομα</p>
+      <p style={{color:'#7A7570',fontSize:13,margin:'0 0 16px'}}>{workers.length} άτομα</p>
       <div style={{display:'flex',flexDirection:'column',gap:8}}>
-        {emps.map(u=>(
-          <button key={u.id} onClick={()=>setSel(u)} style={{background:CARD,borderRadius:12,padding:'14px 16px',border:'1px solid #EDE8E2',display:'flex',alignItems:'center',gap:12,cursor:'pointer',textAlign:'left',width:'100%'}}>
-            <Av initials={u.initials} size={42}/>
-            <div>
-              <p style={{margin:'0 0 2px',fontWeight:600,fontSize:15,color:'#1A1614'}}>{u.name}</p>
-              <p style={{margin:'0 0 1px',fontSize:13,color:'#7A7570'}}>{u.position}</p>
-              <p style={{margin:0,fontSize:12,color:'#9A9590'}}>{u.years} χρόν{u.years===1?'ος':'ια'}</p>
-            </div>
-          </button>
-        ))}
+        {workers.map(w=>{
+          const initials=(w.profiles?.full_name||'').split(' ').map(n=>n[0]).join('').slice(0,2);
+          return(
+            <button key={w.worker_id} onClick={()=>setSel(w)} style={{background:CARD,borderRadius:12,padding:'14px 16px',border:'1px solid #EDE8E2',display:'flex',alignItems:'center',gap:12,cursor:'pointer',textAlign:'left',width:'100%'}}>
+              <Av initials={initials} size={42}/>
+              <div>
+                <p style={{margin:'0 0 2px',fontWeight:600,fontSize:15,color:'#1A1614'}}>{w.profiles?.full_name}</p>
+                <p style={{margin:'0 0 1px',fontSize:13,color:'#7A7570'}}>{w.roles?.role_title}</p>
+                <p style={{margin:0,fontSize:12,color:'#9A9590'}}>{w.worker_experience} χρόν{w.worker_experience===1?'ος':'ια'}</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
       <button onClick={onLogout} style={{width:'100%',marginTop:20,background:'#E24B4A',color:'white',border:'none',borderRadius:12,padding:'14px',fontSize:15,fontWeight:600,cursor:'pointer',letterSpacing:0.3}}>
         Αποσύνδεση
@@ -587,17 +632,20 @@ function BotNav({tab,setTab,tabs,badge={}}){
 }
 
 // ─── Employee App ────────────────────────────
-function EmpApp({user,sched,reqs,setReqs,onLogout}){
+function EmpApp({user,shifts,assignments,setAssignments,reqs,setReqs,onLogout}){
   const[tab,setTab]=useState('calendar');
   const[dk,setDk]=useState(null);
   const[toast,setToast]=useState(null);
-  const pending=reqs.filter(r=>r.userId===user.id&&r.status==='pending').length;
+  const pending=reqs.filter(r=>r.worker_requested===user.id&&r.status==='pending').length;
   const submitReq=req=>{
     setReqs(p=>[req,...p]);setDk(null);
     setToast('Το αίτημά σου υποβλήθηκε επιτυχώς!');
     setTimeout(()=>setToast(null),3500);
   };
-  const cancelReq=id=>setReqs(p=>p.map(r=>r.id===id?{...r,status:'cancelled'}:r));
+  const cancelReq=async(id)=>{
+    await supabase.from('requests').update({status:'cancelled'}).eq('request_id',id);
+    setReqs(p=>p.map(r=>r.request_id===id?{...r,status:'cancelled'}:r));
+  };
   const changeTab=t=>{setTab(t);setDk(null);};
   return(
     <div style={{maxWidth:520,margin:'0 auto'}}>
@@ -606,10 +654,10 @@ function EmpApp({user,sched,reqs,setReqs,onLogout}){
           <div style={{padding:'20px 14px 0',background:BG}}>
             <h1 style={{fontSize:20,fontWeight:700,margin:'0 0 4px',color:'#1A1614'}}>Καλημέρα, {user.firstName} 👋</h1>
           </div>
-          <CalGrid sched={sched} reqs={reqs} uid={user.id} admin={false} onDay={k=>{if(isActive(k))setDk(k);}}/>
+          <CalGrid shifts={shifts} assignments={assignments} reqs={reqs} uid={user.id} admin={false} onDay={k=>{if(isActive(k))setDk(k);}}/>
         </>
       )}
-      {tab==='calendar'&&dk&&<EmpDay dk={dk} sched={sched} reqs={reqs} uid={user.id} onBack={()=>setDk(null)} onReq={submitReq}/>}
+      {tab==='calendar'&&dk&&<EmpDay dk={dk} shifts={shifts} assignments={assignments} reqs={reqs} uid={user.id} onBack={()=>setDk(null)} onReq={submitReq}/>}
       {tab==='requests'&&<EmpReqs reqs={reqs} uid={user.id} onCancel={cancelReq}/>}
       {tab==='profile'&&<EmpProfile user={user} onLogout={onLogout}/>}
       {toast&&(
@@ -623,7 +671,7 @@ function EmpApp({user,sched,reqs,setReqs,onLogout}){
 }
 
 // ─── Admin App ───────────────────────────────
-function AdminApp({user,sched,setSched,reqs,setReqs,onLogout}){
+function AdminApp({user,shifts,assignments,setAssignments,reqs,setReqs,workers,onLogout}){
   const[tab,setTab]=useState('calendar');
   const[dk,setDk]=useState(null);
   const pending=reqs.filter(r=>r.status==='pending').length;
@@ -635,12 +683,12 @@ function AdminApp({user,sched,setSched,reqs,setReqs,onLogout}){
           <div style={{padding:'20px 14px 0',background:BG}}>
             <h1 style={{fontSize:20,fontWeight:700,margin:'0 0 4px',color:'#1A1614'}}>Καλώς ήρθες, {user.firstName} 👋</h1>
           </div>
-          <CalGrid sched={sched} reqs={reqs} uid={null} admin={true} onDay={k=>{if(isActive(k))setDk(k);}}/>
+          <CalGrid shifts={shifts} assignments={assignments} reqs={reqs} uid={null} admin={true} onDay={k=>{if(isActive(k))setDk(k);}}/>
         </>
       )}
-      {tab==='calendar'&&dk&&<AdminDay dk={dk} sched={sched} setSched={setSched} onBack={()=>setDk(null)}/>}
-      {tab==='requests'&&<AdminReqs reqs={reqs} setReqs={setReqs} sched={sched}/>}
-      {tab==='staff'&&<AdminStaff onLogout={onLogout}/>}
+      {tab==='calendar'&&dk&&<AdminDay dk={dk} shifts={shifts} assignments={assignments} setAssignments={setAssignments} workers={workers} onBack={()=>setDk(null)}/>}
+      {tab==='requests'&&<AdminReqs reqs={reqs} setReqs={setReqs} shifts={shifts} assignments={assignments}/>}
+      {tab==='staff'&&<AdminStaff workers={workers} onLogout={onLogout}/>}
       <BotNav tab={tab} setTab={changeTab} tabs={['calendar','requests','staff']} badge={{requests:pending}}/>
     </div>
   );
@@ -649,15 +697,78 @@ function AdminApp({user,sched,setSched,reqs,setReqs,onLogout}){
 // ─── Root ────────────────────────────────────
 export default function App(){
   const[user,setUser]=useState(null);
-  const[sched,setSched]=useState(()=>buildSched());
-  const[reqs,setReqs]=useState(INIT_REQ);
-  const logout=()=>setUser(null);
+  const[shifts,setShifts]=useState([]);
+  const[assignments,setAssignments]=useState([]);
+  const[reqs,setReqs]=useState([]);
+  const[workers,setWorkers]=useState([]);
+  const[loading,setLoading]=useState(false);
+
+  const logout=async()=>{
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  useEffect(()=>{
+    if(!user)return;
+    async function fetchAll(){
+      setLoading(true);
+
+      // Q4 — Βάρδιες μήνα
+      const{data:shiftsData}=await supabase
+        .from('shifts')
+        .select(`shift_id,shift_title,shift_day,shift_start,shift_end,
+          shift_requirements(requirement_id,required_role,workers_needed)`)
+        .gte('shift_day','2026-05-28')
+        .lte('shift_day','2026-06-30')
+        .order('shift_day');
+      setShifts(shiftsData||[]);
+
+      // Q5 — Assignments μήνα
+      const{data:assignData}=await supabase
+        .from('shift_assignments')
+        .select(`assignment_id,assignment_holder,assigned_shift,
+          worker:assignment_holder(worker_id,worker_role_id,worker_experience,phone,
+            profiles:worker_id(full_name),
+            roles:worker_role_id(role_title))`);
+      setAssignments(assignData||[]);
+
+      // Q12 — Αιτήματα
+      const{data:reqData}=await supabase
+        .from('requests')
+        .select(`request_id,worker_requested,request_type,status,request_date,created_at,
+          worker:worker_requested(worker_id,worker_role_id,
+            profiles:worker_id(full_name),
+            roles:worker_role_id(role_title)),
+          day_off_requests(reason),
+          shift_preference_requests(preferred_shift,reason)`)
+        .order('created_at',{ascending:false});
+      setReqs(reqData||[]);
+
+      // Q17 — Προσωπικό
+      const{data:workersData}=await supabase
+        .from('worker')
+        .select(`worker_id,worker_experience,worker_role_id,phone,
+          profiles:worker_id(full_name),
+          roles:worker_role_id(role_title)`);
+      setWorkers(workersData||[]);
+
+      setLoading(false);
+    }
+    fetchAll();
+  },[user]);
+
   if(!user)return<Login onLogin={setUser}/>;
+  if(loading)return(
+    <div style={{minHeight:'100vh',background:BG,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'system-ui,sans-serif'}}>
+      <p style={{color:'#7A7570',fontSize:15}}>Φόρτωση δεδομένων...</p>
+    </div>
+  );
+
   return(
     <div style={{background:BG,minHeight:'100vh'}}>
       {user.role==='admin'
-        ?<AdminApp user={user} sched={sched} setSched={setSched} reqs={reqs} setReqs={setReqs} onLogout={logout}/>
-        :<EmpApp user={user} sched={sched} reqs={reqs} setReqs={setReqs} onLogout={logout}/>
+        ?<AdminApp user={user} shifts={shifts} assignments={assignments} setAssignments={setAssignments} reqs={reqs} setReqs={setReqs} workers={workers} onLogout={logout}/>
+        :<EmpApp user={user} shifts={shifts} assignments={assignments} setAssignments={setAssignments} reqs={reqs} setReqs={setReqs} onLogout={logout}/>
       }
     </div>
   );
